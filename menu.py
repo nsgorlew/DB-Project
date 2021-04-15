@@ -2,6 +2,43 @@ import socket
 bool = True
 i = 0
 
+def reader_menu():
+    try:
+        card_number = int(input("Input card number: "))
+        #need function here to verify card number
+        print("#" * 80)
+        print("1. Search for a document")
+        print("2. Document checkout")
+        print("3. Document return")
+        print("4. Document reserve")
+        print("5. Check fines")
+        print("6. Search for a document")
+        print("7. Get reader reserve list")
+        print("8. Get document list")
+        print("0. Exit")
+        print("#" * 80)
+        try:
+            choice = int(input("Please enter your choice (0-8): "))
+            if choice==1:
+                print("1. Search by Document ID")
+                print("2. Search by Document name")
+                print("0. Return to main menu")
+                print("#" * 80)
+                try:
+                    2nd_choice = int(input("Please enter an option (0-2): "))
+                    #put in search functions
+                except:
+                    print("Please input a valid choice. ")
+            elif choice==2:
+                pass
+            elif choice==3:
+                pass
+            
+        except:
+            print("Please input a valid choice. ")
+    except:
+        print("Please input a valid card number.")
+
 while(bool == True):
     print("-" * 80)
     print("1. Reader")
