@@ -3,6 +3,7 @@ bool = True
 i = 0
 
 def reader_menu():
+    reader_bool = True
     try:
         card_number = int(input("Input card number: "))
         #need function here to verify card number
@@ -17,25 +18,49 @@ def reader_menu():
         print("8. Get document list")
         print("0. Exit")
         print("#" * 80)
-        try:
-            choice = int(input("Please enter your choice (0-8): "))
-            if choice==1:
-                print("1. Search by Document ID")
-                print("2. Search by Document name")
-                print("0. Return to main menu")
-                print("#" * 80)
-                try:
-                    2nd_choice = int(input("Please enter an option (0-2): "))
-                    #put in search functions
-                except:
-                    print("Please input a valid choice. ")
-            elif choice==2:
-                pass
-            elif choice==3:
-                pass
-            
-        except:
-            print("Please input a valid choice. ")
+        while(reader_bool == True):
+            try:
+                sub_bool = True
+                choice = int(input("Please enter your choice (0-8): "))
+                if choice==1:
+                    print("1. Search by Document ID")
+                    print("2. Search by Document name")
+                    print("0. Return to main menu")
+                    print("#" * 80)
+                    while(sub_bool == True):
+                    try:
+                        2nd_choice = int(input("Please enter an option (0-2): "))
+                        #put in search functions
+                        if 2nd_choice==1:
+                            #TODO: search function by doc ID
+                            sub_bool = False
+                        elif 2nd_choice==2:
+                            #TODO: search function by doc name
+                            sub_bool = False
+                        elif 2nd_choice==0:
+                            sub_bool = False
+                        else:
+                            print("Please input a valid choice. ")
+                    except:
+                        print("Please input a valid choice. ")
+                elif choice==2:
+                    try:
+                        docid = input("Input the document ID: ")
+                        #TODO: put in search function
+                        #placeholder boolean is "found"
+                        found = True
+                        if found==True:
+                            #TODO: reserve function
+                            pass
+                        else:
+                            print("Not a valid document ID.")
+                    except:
+                        print("Not a valid document ID.")
+                elif choice==3:
+                    pass
+
+            except:
+                print("Please input a valid choice. ")
     except:
         print("Please input a valid card number.")
 
