@@ -1,110 +1,197 @@
-import socket
-bool = True
-i = 0
+import psycopg2
+from reservation_functions import new_reservation_num
+from borrow_functions import new_borrow,return_doc,get_fine
+from reader_functions import check_card_number,get_reader_reserve_list,get_document_list
+from admin_functions import checkUser,add_document_copy,search_document_copy,add_new_reader,branch_search_by_id,branch_search_by_name,branch_search_by_loc
 
+#connect to db
+def connect_db():
+    conn = None
+    try:
+        conn = psycopg2.connect("dbname=? user=? password=?", ("LibCS631","postgres","postgres"))
+    except Error as e:
+        print(e)
+    return conn
+
+#search for document by docID
+def search_by_docID(conn,doc):
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM DOCUMENT WHERE DocId='?' ORDER BY DocId", (doc))
+        row = cur.fetchone()
+        while row is not None:
+            print(row)
+            row = cur.fetchone()
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as e:
+        print(e)
+
+#search for document by title
+def search_by_doc_title(conn,doc):
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM DOCUMENT WHERE Title='?' ORDER BY Title", (doc))
+        row = cur.fetchone()
+        while row is not None:
+            print(row)
+            row = cur.fetchone()
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as e:
+        print(e)
+        
+#search for document by publisher name
+def search_by_doc_pub(conn,pub):
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM DOCUMENT WHERE PubName='?' ORDER BY Title", (pub))
+        row = cur.fetchone()
+        while row is not None:
+            print(row)
+            row = cur.fetchone()
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as e:
+        print(e)
+
+#main document search function
+def doc_search(choice):
+    if choice == 1:
+    	docID = input("Enter a document ID: ")
+    	search_by_docID(connect_db(),docID)
+    	sub_boolean = False
+    elif choice == 2:
+        docTitle = input("Enter a document title: ")
+        search_by_doc_title(connect_db(),docTitle)
+        sub_boolean = False
+    elif choice == 3:
+        docPub = input("Enter the publisher name: ")
+        search_by_doc_pub(connect_db(),docPub)
+        sub_boolean = False
+    elif choice == 0:
+    	sub_boolean = False
+    return sub_boolean
+		
+	
+#reader menu function
 def reader_menu():
+    primary_bool = True
     reader_bool = True
     try:
-        card_number = int(input("Input card number: "))
-        #need function here to verify card number
-        print("#" * 80)
-        print("1. Search for a document")
-        print("2. Document checkout")
-        print("3. Document return")
-        print("4. Document reserve")
-        print("5. Check fines")
-        print("6. Search for a document")
-        print("7. Get reader reserve list")
-        print("8. Get document list")
-        print("0. Exit")
-        print("#" * 80)
-        while(reader_bool == True):
-            try:
-                sub_bool = True
-                choice = int(input("Please enter your choice (0-8): "))
-                if choice==1:
-                    print("1. Search by Document ID")
-                    print("2. Search by Document name")
-                    print("0. Return to main menu")
-                    print("#" * 80)
-                    while(sub_bool == True):
+        card_number = input("Input card number: ")
+        check = check_card_number(card_number)
+        if check == False:
+            primary_bool == False
+        else:
+            while(primary_bool==True):
+                print("#" * 80)
+                print("1. Search for a document by ID, title, or publisher name")
+                print("2. Document checkout")
+                print("3. Document return")
+                print("4. Document reserve")
+                print("5. Check fines")
+                print("6. Get reader reserve list")
+                print("7. Get document list")
+                print("0. Exit")
+                print("#" * 80)
+                while(reader_bool == True):
                     try:
-                        2nd_choice = int(input("Please enter an option (0-2): "))
-                        #put in search functions
-                        if 2nd_choice==1:
-                            #TODO: search function by doc ID
-                            sub_bool = False
-                        elif 2nd_choice==2:
-                            #TODO: search function by doc name
-                            sub_bool = False
-                        elif 2nd_choice==0:
-                            sub_bool = False
-                        else:
-                            print("Please input a valid choice. ")
+                        choice = int(input("Please enter your choice (0-7): "))
+                        if choice==1:
+                            print("1. Search by document ID")
+                            print("2. Search by document name")
+                            print("3. Search by publisher")
+                            print("0. Return to main menu")
+                            print("#" * 80)
+                            sub_bool = True
+                            while(sub_bool == True):
+                                secondchoice = int(input("Please enter your choice (0-3): "))
+                                try:
+                                    sub_bool = doc_search(secondchoice)
+                                except:
+                                    print("Please input a valid choice. ")
+                        elif choice==2:
+                            try:
+                                docid = input("Input the document ID: ")
+                                found = doc_search(docid)
+                                if found==True:
+                                    new_borrow(connect_db(),card_number, docid)
+                                    pass
+                                else:
+                                    print("Not a valid document ID.")
+                            except:
+                                print("Not a valid document ID.")
+                        elif choice==3:
+                            bor_number = input("Borrow number: ")
+                            return_doc(connect_db(),bor_number)
+                        elif choice==4:
+                            new_reservation_num(connect_db(),card_number, docid)
+                        elif choice==5:
+                            get_fine(connect_db(),card_number)
+                        elif choice==6:
+                            get_reader_reserve_list(connect_db(),card_number)
+                        elif choice==7:
+                            get_document_list(connect_db())
+                        elif choice==0:
+                            reader_bool = False
                     except:
                         print("Please input a valid choice. ")
-                elif choice==2:
-                    try:
-                        docid = input("Input the document ID: ")
-                        #TODO: put in search function
-                        #placeholder boolean is "found"
-                        found = True
-                        if found==True:
-                            #TODO: reserve function
-                            pass
-                        else:
-                            print("Not a valid document ID.")
-                    except:
-                        print("Not a valid document ID.")
-                elif choice==3:
-                    pass
-
-            except:
-                print("Please input a valid choice. ")
     except:
         print("Please input a valid card number.")
 
-while(bool == True):
-    print("-" * 80)
-    print("1. Reader")
-    print("2. Admin")
-    print("-" * 80)
-    try:
-        option_1 = int(input("Select an option: "))
-        if option_1 == 1:
-            print("1. Query")
-            print("2. Update Reader")
-            print("3. Update Document")
-            print("4. Reserve Document")
-            print("5. Borrow Document")
-            print("6. Return Document")
-            print("0. Exit")
-            print("-" * 80)
-            try:
-                option = int(input("Select an option: "))
-                if option == 1:
-                    SQL_func = input("Input SQL statement: ")
-                    query_result = SQL_func.execute()
-                    print(query_result)
-                    bool = True
-                elif option == 2:
-                    reader_name = input("Name of Reader: ")
-                    question = input("Would you like to include another reader? Y/N: ")
-                    if question == Y or y:
-                                     reader2 = input("Enter next reader
-                    print("-" * 80)
-                    print("1. Name")
-
-                    bool = True
-                elif option == 3:
-                    bool = True
-                elif option == 0:
-                    bool = False
-                    break
-            except:
-                print("Invalid option. Please select an integer option from the menu.")
-        if option_1 == 2:
-            print("-" * 80)
-            print("1. Add Reader")
-            print("2. Edit Reader")
-            print("3. Delete Reader")
+#admin menu function
+def admin_menu():
+    admin_login_bool = False
+    while admin_login_bool == False:
+        username = input("Username: ")
+        password = input("Password: ")
+        admin_login_bool = checkUser(connect_db(),user,pw)
+    admin_menu_bool = True
+    while admin_menu_bool == True:
+        print("-" * 80)
+        print("1. Add a document copy")
+        print("2. Search a document copy and check its status")
+        print("3. Add a new reader")
+        print("4. Print branch information")
+        print("0. Exit")
+        print("-" * 80)
+        admin_choice = int(input("Select an option (0-4): "))
+        try:
+            if admin_choice == 1:
+                print("-" * 80)
+                add_doc = input("Enter the document ID: ")
+                add_document_copy(conn,add_doc)
+            elif admin_choice == 2:
+                print("-" * 80)
+                search_doc_copy = input("Enter the Document ID: ")
+                search_doc_copy_num = input("Enter the document copy number: ")
+            elif admin_choice == 3:
+                print("-" * 80)
+                rtype = input("Type of reader: ")
+                rname = input("Name of reader: ")
+                raddress = input("Address of reader: ")
+                rphone = input("Phone number of reader: ")
+                add_new_reader(rtype,rname,raddress,rphone)
+            elif admin_choice == 4:
+                print("-" * 80)
+                print("1. Search by branch ID")
+                print("2. Search by branch name")
+                print("3. Search by branch location")
+                print("-" * 80)
+                branch_search_choice = int(input("Enter your search choice (0-3)): "))
+                try:
+                    if branch_search_choice == 1:
+                        branch_id_search = input("Enter the branch ID: ")
+                        branch_search_by_id(conn,branch_id_search)
+                    elif branch_search_choice == 2:
+                        branch_name_search = input("Enter the branch name: ")
+                        branch_search_by_name(conn,branch_name_search)
+                    elif branch_search_choice == 3:
+                        branch_loc_search = input("Enter the branch location: ")
+                        branch_search_by_loc(conn,branch_loc_search)
+                except:
+                    print("Not a valid choice")
+            elif admin_choice == 0:
+                admin_menu_bool == False
+        except:
+            print("Not a valid choice")
+        
+print("yay!")
