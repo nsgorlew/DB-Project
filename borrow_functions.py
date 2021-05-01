@@ -38,6 +38,8 @@ def return_doc(conn,reader_id,doc_id,copynum):
     try:
         cur = conn.cursor()
         cur.execute("UPDATE BORROWING SET RDTIME = CURRENT_DATE WHERE BOR_NO = (SELECT BOR_NO FROM BORROWS WHERE DOCID=%s AND COPYNO=%s AND RID=%s ORDER BY BOR_NO DESC LIMIT 1)" % (doc_id,copynum,reader_id))
+        print("-"*80)
+        print("Document returned")
         conn.commit()
         #Test function
         #cur.execute("SELECT * FROM BORROWS")
