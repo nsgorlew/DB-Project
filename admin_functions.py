@@ -128,3 +128,89 @@ def create_new_document(conn,docname,pubdate,pubid,branchid,docposition):
         cur.close()
     except (Exception,psycopg2.DatabaseError) as e:
         print(e)
+
+def q1_most_frequent_borrowers_for_a_branch(conn,num_readers,branchid):
+    try:
+        cur = conn.cursor()
+        cur.execute("Select r.rid, r.rname, count(b.bor_no) AS No_Books from \
+        borrows b, reader r where r.rid = b.rid AND b.bid='%s' group by r.rid \
+        order by r.rid desc limit %s;"%(branchid,num_readers))
+        print("Reader ID | Reader Name | Number of books borrowed")
+        print("-"*40)
+        while True:
+            row = cur.fetchone()
+            if row == None:
+                break
+            print(row)
+        cur.close()
+    except (Exception,psycopg2.DatabaseError) as e:
+        print(e)
+
+def q2_most_frequent_borrowers(conn, num_readers):
+    try:
+        cur = conn.cursor()
+        cur.execute("Select r.rid, r.rname, count(b.bor_no) AS No_Books from \
+        borrows b, reader r where r.rid = b.rid group by r.rid \
+        order by r.rid desc limit %s;"%(num_readers))
+        print("Reader ID | Reader Name | Number of books borrowed")
+        print("-"*40)
+        while True:
+            row = cur.fetchone()
+            if row == None:
+                break
+            print(row)
+        cur.close()
+    except (Exception,psycopg2.DatabaseError) as e:
+        print(e)
+
+def q3_most_borrowed_books_for_a_branch(conn,num_books,branchid):
+    try:
+        cur = conn.cursor()
+        cur.execute("Select d.docid, d.title from document d, borrows b \
+        where d.docid = b.docid AND b.bid = '%s' group by d.docid \
+        order by count(b.bor_no) desc LIMIT %s;"%(branchid, num_books))
+        print("Document ID | Document Title")
+        print("-"*40)
+        while True:
+            row = cur.fetchone()
+            if row == None:
+                break
+            print(row)
+        cur.close()
+    except (Exception,psycopg2.DatabaseError) as e:
+        print(e)
+
+def q4_most_borrowed_books(conn,num_books):
+    try:
+        cur = conn.cursor()
+        cur.execute("Select d.docid, d.title from document d, borrows b \
+        where d.docid = b.docid group by d.docid \
+        order by count(b.bor_no) desc LIMIT %s;"%(num_books))
+        print("Document ID | Document Title")
+        print("-"*40)
+        while True:
+            row = cur.fetchone()
+            if row == None:
+                break
+            print(row)
+        cur.close()
+    except (Exception,psycopg2.DatabaseError) as e:
+        print(e)
+
+def q5_most_popular_books_by_year(conn,year):
+    try:
+        cur = conn.cursor()
+        cur.execute("Select d.docid, d.title from document d, borrows b, borrowing b1 \
+        where d.docid = b.docid AND b.bor_no = b1.bor_no AND b1.bdtime \
+        between '%s-01-01' AND '%s-12-31' group by d.docid, b1.bdtime \
+        order by count(b.bor_no) desc limit 10;"%(year,year))
+        print("Document ID | Document Title")
+        print("-"*40)
+        while True:
+            row = cur.fetchone()
+            if row == None:
+                break
+            print(row)
+        cur.close()
+    except (Exception,psycopg2.DatabaseError) as e:
+        print(e)

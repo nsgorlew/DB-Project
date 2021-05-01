@@ -3,6 +3,7 @@ from reservation_functions import new_reservation_num
 from borrow_functions import new_borrow,return_doc,fine
 from reader_functions import check_card_number,get_reader_reserve_list,get_document_list
 from admin_functions import checkUser,add_document_copy,search_document_copy,add_new_reader,branch_search_by_id,branch_search_by_name,branch_search_by_loc,create_new_document
+from admin_functions import q1_most_frequent_borrowers_for_a_branch, q2_most_frequent_borrowers, q3_most_borrowed_books_for_a_branch, q4_most_borrowed_books, q5_most_popular_books_by_year
 
 #connect to db
 def connect_db():
@@ -154,9 +155,15 @@ def admin_menu():
         print("3. Add a new reader")
         print("4. Print branch information")
         print("5. Add new document")
+        print("6. Get most frequent borrowers of a branch")
+        print("7. Get most frequent borrowers")
+        print("8. Get most borrowed books for a branch")
+        print("9. Get most borrowed books")
+        print("10. Get most popular books by year")
+        print("11. TODO")
         print("0. Exit")
         print("-" * 80)
-        admin_choice = int(input("Select an option (0-4): "))
+        admin_choice = int(input("Select an option (0-11): "))
         try:
             if admin_choice == 1:
                 print("-" * 80)
@@ -202,6 +209,25 @@ def admin_menu():
                 branchid = input("Branch ID: ")
                 docposition = input("Document position: ")
                 create_new_document(connect_db(),docname,pubdate,pubid,branchid,docposition)
+            elif admin_choice == 6:
+                num_readers = input("Number of top entries: ")
+                branchid = input("Branch ID: ")
+                q1_most_frequent_borrowers_for_a_branch(connect_db(),num_readers,branchid)
+            elif admin_choice == 7:
+                num_readers = input("Number of top entries: ")
+                q2_most_frequent_borrowers(connect_db(), num_readers)
+            elif admin_choice == 8:
+                num_books = input("Number of top entries: ")
+                branchid = input("Branch ID: ")
+                q3_most_borrowed_books_for_a_branch(connect_db(),num_books,branchid)
+            elif admin_choice == 9:
+                num_books = input("Number of top entries: ")
+                q4_most_borrowed_books(connect_db(),num_books)
+            elif admin_choice == 10:
+                year = input("Year (YYYY): ")
+                q5_most_popular_books_by_year(connect_db(),year)
+            elif admin_choice == 11:
+                print('Function not implemented')
             elif admin_choice == 0:
                 admin_menu_bool == False
                 break
