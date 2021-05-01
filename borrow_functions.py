@@ -20,10 +20,9 @@ def check_reservations(conn,reader_id,doc_id,copy):
 def new_borrow(conn,reader_id,doc_id,copy):
         try:
             cur = conn.cursor()
-#             cur.execute("INSERT INTO BORROWING (BOR_NO,BDTIME) VALUES (((SELECT BOR_NO FROM BORROWING ORDER BY BOR_NO DESC LIMIT 1)+1),CURRENT_DATE)")
-            #RDTIME WILL AUTOMATICALLY BE NULL IF NOT MENTIONED IN THE INSERT
-            cur.execute("INSERT INTO BORROWING (BDTIME) VALUES (CURRENT_DATE)")
-            cur.execute("INSERT INTO BORROWS (BOR_NO,DOCID,COPYNO,BID,RID) VALUES (((SELECT BOR_NO FROM BORROWING ORDER BY BDTIME DESC LIMIT 1)),%s,%s,(SELECT BID FROM COPY WHERE DOCID=%s AND COPYNO=%s),%s)" %(doc_id,copy,doc_id,copy,reader_id))
+            cur.execute("INSERT INTO BORROWING (BDTIME, RDTIME) VALUES (CURRENT_DATE, NULL)")
+            conn.commit()
+            cur.execute("INSERT INTO BORROWS (BOR_NO,DOCID,COPYNO,BID,RID) VALUES ((currval(pg_get_serial_sequence('BORROWING','bor_no'))),%s,%s,(SELECT BID FROM COPY WHERE DOCID=%s AND COPYNO=%s),%s)" %(doc_id,copy,doc_id,copy,reader_id))
             print("-"*80)
             print("Document successfully borrowed")
             conn.commit()
@@ -35,10 +34,10 @@ def new_borrow(conn,reader_id,doc_id,copy):
             if conn is not None:
                 conn.close()
 
-def return_doc(conn,bor_no):
+def return_doc(conn,reader_id,doc_id,copynum):
     try:
         cur = conn.cursor()
-        cur.execute("UPDATE BORROWING SET RDTIME = CURRENT_DATE WHERE BOR_NO = %s" % (bor_no))
+        cur.execute("UPDATE BORROWING SET RDTIME = CURRENT_DATE WHERE BOR_NO = (SELECT BOR_NO FROM BORROWS WHERE DOCID=%s AND COPYNO=%s AND RID=%s ORDER BY BOR_NO DESC LIMIT 1)" % (doc_id,copynum,reader_id))
         conn.commit()
         #Test function
         #cur.execute("SELECT * FROM BORROWS")
