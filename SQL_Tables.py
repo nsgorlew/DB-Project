@@ -70,29 +70,62 @@ def create_initial_tables():
     
     """ create tables in the PostgreSQL database"""
     commands = (
-          """
-          CREATE TABLE PUBLISHER (
-                PUBLISHERID SERIAL NOT NULL,
-                PUBNAME VARCHAR(255),
-                ADDRESS VARCHAR(255),
-                PRIMARY KEY (PUBLISHERID)
-          )
-          """,
-          """
-          CREATE TABLE PERSON (
-                PID SERIAL NOT NULL,
-                PNAME VARCHAR(75),
-                PRIMARY KEY (PID)
-                )
-         """,
-         """
-          CREATE TABLE ADMIN (
-                USERNAME VARCHAR(10) NOT NULL,
-                PASSWORD VARCHAR(10),
-                PRIMARY KEY (USERNAME, PASSWORD)
-                )
-         """,
-         )
+        """
+        CREATE TABLE PUBLISHER (
+            PUBLISHERID SERIAL NOT NULL,
+            PUBNAME VARCHAR(255),
+            ADDRESS VARCHAR(255),
+            PRIMARY KEY (PUBLISHERID)
+        )
+        """,
+        """
+        CREATE TABLE PERSON (
+            PID SERIAL NOT NULL,
+            PNAME VARCHAR(75),
+            PRIMARY KEY (PID)
+        )
+        """,
+        """
+        CREATE TABLE ADMIN (
+            USERNAME VARCHAR(10) NOT NULL,
+            PASSWORD VARCHAR(10),
+            PRIMARY KEY (USERNAME, PASSWORD)
+        )
+        """,
+        """
+        CREATE TABLE READER (
+            RID SERIAL NOT NULL,
+            RTYPE VARCHAR(255),
+            RNAME VARCHAR(255),
+            RADDRESS VARCHAR(255),
+            PHONE_NO VARCHAR(75),
+            PRIMARY KEY (RID)
+        )
+        """,
+        """
+        CREATE TABLE BRANCH (
+            BID SERIAL NOT NULL,
+            LNAME VARCHAR(255),
+            LOCATION VARCHAR(255),
+            PRIMARY KEY (BID)
+        )
+        """,
+        """
+        CREATE TABLE RESERVATION (
+            RES_NO SERIAL NOT NULL,
+            DTIME TIMESTAMP NOT NULL,
+            PRIMARY KEY (RES_NO)
+            )
+        """,
+        """
+        CREATE TABLE BORROWING (
+            BOR_NO SERIAL NOT NULL,
+            BDTIME DATE NOT NULL,
+            RDTIME DATE NOT NULL,
+            PRIMARY KEY (BOR_NO)
+            )
+        """
+    )
     
     conn = None
     try:
@@ -217,8 +250,58 @@ def create_all_tables():
                 REFERENCES PERSON (PID)
                 ON UPDATE CASCADE ON DELETE CASCADE
         )
+        """,
         """
-            )
+        CREATE TABLE COPY (
+            DOCID INTEGER NOT NULL,
+            COPYNO INTEGER NOT NULL,
+            BID INTEGER NOT NULL,
+            POSITION VARCHAR(255),
+            PRIMARY KEY (DOCID, COPYNO, BID),
+            FOREIGN KEY (DOCID)
+                REFERENCES DOCUMENT (DOCID)
+                ON UPDATE CASCADE ON DELETE CASCADE,
+            FOREIGN KEY (BID)
+                REFERENCES BRANCH (BID)
+                ON UPDATE CASCADE ON DELETE CASCADE
+        )
+        """,
+        """
+        CREATE TABLE RESERVES (
+            RID INTEGER NOT NULL,
+            RESERVATION_NO INTEGER NOT NULL,
+            DOCID INTEGER NOT NULL,
+            COPYNO INTEGER NOT NULL,
+            BID INTEGER NOT NULL,
+            PRIMARY KEY (RESERVATION_NO, DOCID, COPYNO, BID),
+            FOREIGN KEY (DOCID, COPYNO, BID)
+                REFERENCES COPY (DOCID, COPYNO, BID)
+                ON UPDATE CASCADE ON DELETE CASCADE,
+            FOREIGN KEY (RESERVATION_NO)
+                REFERENCES RESERVATION (RES_NO)
+                ON UPDATE CASCADE ON DELETE CASCADE,
+            FOREIGN KEY (RID)
+                REFERENCES READER (RID)
+                ON UPDATE CASCADE ON DELETE CASCADE
+        )
+        """,
+        """
+        CREATE TABLE BORROWS (
+            BOR_NO INTEGER NOT NULL,
+            DOCID INTEGER NOT NULL,
+            COPYNO INTEGER NOT NULL,
+            BID INTEGER NOT NULL,
+            RID INTEGER NOT NULL,
+            PRIMARY KEY (BOR_NO, DOCID, COPYNO, BID),
+            FOREIGN KEY (DOCID, COPYNO, BID)
+                REFERENCES COPY (DOCID, COPYNO, BID)
+                ON UPDATE CASCADE ON DELETE CASCADE,
+            FOREIGN KEY (RID)
+                REFERENCES READER (RID)
+                ON UPDATE CASCADE ON DELETE CASCADE
+        )
+        """        
+    )
     
     conn = None
     try:
@@ -244,48 +327,9 @@ def create_all_tables():
 create_initial_tables()
 create_all_tables()
 
-
-#Populate the tables with values from the CSV files
-
-# Code to insert value one row at the time
-# (no longer used)
-#
-# def insert_book():
-#     """ insert a new book into the book table """
-#     sql = """INSERT INTO DOCUMENT (TITLE, PDATE, PUBLISHERID)
-#           VALUES ('Early African American Classics (Barnes &amp; Noble Classics Series)', '2/14/1989', '980');"""
-#     conn = None
-    
-#     try:
-#         # read database configuration
-#         params = config()
-#         # connect to the PostgreSQL database
-#         conn = psycopg2.connect(**params)
-#         # create a new cursor
-#         cur = conn.cursor()
-#         # execute the INSERT statement
-#         cur.execute(sql)
-#         # get the generated id back
-# #         vendor_id = cur.fetchone()[0]
-#         # commit the changes to the database
-#         conn.commit()
-#         # close communication with the database
-#         cur.close()
-#     except (Exception, psycopg2.DatabaseError) as error:
-#         print(error)
-#     finally:
-#         if conn is not None:
-#             conn.close()
-
-# insert_book()
-
-
 # Data is populated using populate function(). For tables where the date information must be read from the csv files, separate functions are implemented (and IO is done using pandas).
 
 def populate(csv_file, sql_insert):
-#     file = r'csv_files/Gedits.csv'
-#     sql_insert = """INSERT INTO %s (DOCID, ISSUE_NO, PID)
-#                 VALUES(%s, %s, %s)"""
     conn = None
     try:
         params = config()
@@ -307,7 +351,6 @@ def populate(csv_file, sql_insert):
             cursor.close()
             conn.close()
             print("Table populated. Connection closed.")
-
 
 def populate_documents():
     
@@ -375,26 +418,17 @@ populate('csv_files/Authors.csv', """INSERT INTO AUTHORS (PID, DOCID) VALUES(%s,
 populate('csv_files/Gedits.csv', """INSERT INTO GEDITS (DOCID, ISSUE_NO, PID) VALUES(%s, %s, %s)""")
 populate('csv_files/Chairs.csv', """INSERT INTO CHAIRS (PID, DOCID) VALUES(%s, %s)""")
 
-
-#Check the constraints
-conn = None
-try:
-    params = config()
-    # connect to the PostgreSQL database
-    conn = psycopg2.connect(**params)
-    cursor = conn.cursor()
-    cursor.execute("""UPDATE JOURNAL_VOLUME SET VOLUME_NO = %s, EDITOR = %s WHERE DOCID = %s""", 
-                   (-8, 1, 29))
-    conn.commit()
-except (Exception, psycopg2.DatabaseError) as error:
-    print(error)
-finally:
-    print('query executed.')
-    if conn is not None:
-        cursor.close()
-        conn.close()
-
-
-
-
-
+populate('csv_files/Branch.csv', 
+         """INSERT INTO BRANCH (LNAME, LOCATION) VALUES(%s, %s)""")
+populate('csv_files/Reader.csv', 
+         """INSERT INTO READER (RTYPE, RNAME, RADDRESS, PHONE_NO) VALUES(%s, %s, %s, %s)""")
+populate('csv_files/Borrowing.csv', 
+         """INSERT INTO BORROWING (BDTIME, RDTIME) VALUES(%s, %s)""")
+populate('csv_files/Reservation.csv', 
+         """INSERT INTO RESERVATION (DTIME) VALUES(%s)""")
+populate('csv_files/Copy.csv', 
+         """INSERT INTO COPY (DOCID, COPYNO, BID, POSITION) VALUES(%s, %s, %s, %s)""")
+populate('csv_files/Reserves.csv', 
+         """INSERT INTO RESERVES (RID, RESERVATION_NO, DOCID, COPYNO, BID) VALUES(%s, %s, %s, %s, %s)""")
+populate('csv_files/Borrows.csv', 
+         """INSERT INTO BORROWS (BOR_NO, DOCID, COPYNO, BID, RID) VALUES(%s, %s, %s, %s, %s)""")
