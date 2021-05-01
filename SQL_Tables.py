@@ -37,10 +37,10 @@ def connect():
         # connect to the PostgreSQL server
         print('Connecting to the PostgreSQL database...')
         conn = psycopg2.connect(**params)
-		
+
         # create a cursor
         cur = conn.cursor()
-        
+
 	# execute a statement
         print('PostgreSQL database version:')
         cur.execute('SELECT version()')
@@ -49,7 +49,7 @@ def connect():
         # display the PostgreSQL database server version
         db_version = cur.fetchone()
         print(db_version)
-       
+
         # close the communication with the PostgreSQL
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
@@ -67,7 +67,7 @@ connect()
 #First create tables for publisher, person and admin, and then create the rest of the tables.
 
 def create_initial_tables():
-    
+
     """ create tables in the PostgreSQL database"""
     commands = (
         """
@@ -121,12 +121,12 @@ def create_initial_tables():
         CREATE TABLE BORROWING (
             BOR_NO SERIAL NOT NULL,
             BDTIME DATE NOT NULL,
-            RDTIME DATE NOT NULL,
+            RDTIME DATE,
             PRIMARY KEY (BOR_NO)
             )
         """
     )
-    
+
     conn = None
     try:
         # read the connection parameters
@@ -149,7 +149,7 @@ def create_initial_tables():
             conn.close()
 
 def create_all_tables():
-    
+
     """ create tables in the PostgreSQL database"""
     commands = (
         """
@@ -300,9 +300,9 @@ def create_all_tables():
                 REFERENCES READER (RID)
                 ON UPDATE CASCADE ON DELETE CASCADE
         )
-        """        
+        """
     )
-    
+
     conn = None
     try:
         # read the connection parameters
@@ -353,7 +353,7 @@ def populate(csv_file, sql_insert):
             print("Table populated. Connection closed.")
 
 def populate_documents():
-    
+
     file = r'csv_files/Document.csv'
     sql_insert = """INSERT INTO DOCUMENT (TITLE, PDATE, PUBLISHERID)
                 VALUES(%s, %s, %s)"""
@@ -379,7 +379,7 @@ def populate_documents():
 
 
 def populate_confproc():
-    
+
     file = r'csv_files/confprocee.csv'
     sql_insert = """INSERT INTO PROCEEDINGS (DOCID, CDATE, CLOCATION, CEDITOR)
                 VALUES(%s, %s, %s, %s)"""
@@ -409,26 +409,42 @@ populate('csv_files/Publisher.csv', """INSERT INTO PUBLISHER (PUBNAME, ADDRESS) 
 populate_documents()
 populate('csv_files/Person.csv', """INSERT INTO PERSON (PNAME) VALUES(%s)""")
 populate('csv_files/book.csv', """INSERT INTO BOOK (DOCID, ISBN) VALUES(%s, %s)""")
-populate('csv_files/JVolume.csv', 
+populate('csv_files/JVolume.csv',
          """INSERT INTO JOURNAL_VOLUME (DOCID, VOLUME_NO, EDITOR) VALUES(%s, %s, %s)""")
 populate_confproc()
-populate('csv_files/JIssue.csv', 
+populate('csv_files/JIssue.csv',
          """INSERT INTO JOURNAL_ISSUE (DOCID, ISSUE_NO, SCOPE) VALUES(%s, %s, %s)""")
 populate('csv_files/Authors.csv', """INSERT INTO AUTHORS (PID, DOCID) VALUES(%s, %s)""")
 populate('csv_files/Gedits.csv', """INSERT INTO GEDITS (DOCID, ISSUE_NO, PID) VALUES(%s, %s, %s)""")
 populate('csv_files/Chairs.csv', """INSERT INTO CHAIRS (PID, DOCID) VALUES(%s, %s)""")
 
-populate('csv_files/Branch.csv', 
+populate('csv_files/Branch.csv',
          """INSERT INTO BRANCH (LNAME, LOCATION) VALUES(%s, %s)""")
-populate('csv_files/Reader.csv', 
+populate('csv_files/Reader.csv',
          """INSERT INTO READER (RTYPE, RNAME, RADDRESS, PHONE_NO) VALUES(%s, %s, %s, %s)""")
-populate('csv_files/Borrowing.csv', 
+populate('csv_files/Borrowing.csv',
          """INSERT INTO BORROWING (BDTIME, RDTIME) VALUES(%s, %s)""")
-populate('csv_files/Reservation.csv', 
+populate('csv_files/Reservation.csv',
          """INSERT INTO RESERVATION (DTIME) VALUES(%s)""")
-populate('csv_files/Copy.csv', 
+populate('csv_files/Copy.csv',
          """INSERT INTO COPY (DOCID, COPYNO, BID, POSITION) VALUES(%s, %s, %s, %s)""")
-populate('csv_files/Reserves.csv', 
+populate('csv_files/Reserves.csv',
          """INSERT INTO RESERVES (RID, RESERVATION_NO, DOCID, COPYNO, BID) VALUES(%s, %s, %s, %s, %s)""")
-populate('csv_files/Borrows.csv', 
+populate('csv_files/Borrows.csv',
          """INSERT INTO BORROWS (BOR_NO, DOCID, COPYNO, BID, RID) VALUES(%s, %s, %s, %s, %s)""")
+
+# register admin
+try:
+    params = config()
+    # connect to the PostgreSQL database
+    conn = psycopg2.connect(**params)
+    cur = conn.cursor()
+    cur.execute("INSERT INTO ADMIN (username, password) VALUES ('631','631')")
+    print('Admin registered')
+    conn.commit()
+except (Exception, psycopg2.DatabaseError) as error:
+    print(error)
+finally:
+    if conn is not None:
+        cur.close()
+        conn.close()

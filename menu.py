@@ -40,7 +40,7 @@ def search_by_doc_title(conn,doc):
         cur.close()
     except (Exception, psycopg2.DatabaseError) as e:
         print(e)
-        
+
 #search for document by publisher name
 def search_by_doc_pub(conn,pub):
     try:
@@ -57,9 +57,9 @@ def search_by_doc_pub(conn,pub):
 #main document search function
 def doc_search(choice):
     if choice == 1:
-    	docID = input("Enter a document ID: ")
-    	search_by_docID(connect_db(),docID)
-    	sub_boolean = False
+        docID = input("Enter a document ID: ")
+        search_by_docID(connect_db(),docID)
+        sub_boolean = False
     elif choice == 2:
         docTitle = str(input("Enter a document title: "))
         search_by_doc_title(connect_db(),docTitle)
@@ -69,17 +69,17 @@ def doc_search(choice):
         search_by_doc_pub(connect_db(),docPub)
         sub_boolean = False
     elif choice == 0:
-    	sub_boolean = False
+        sub_boolean = False
     return sub_boolean
-		
-	
+
+
 #reader menu function
 def reader_menu():
     primary_bool = True
     reader_bool = True
     try:
         #reader id == card_number
-        card_number = int(input("Input reader ID: "))
+        card_number = str(input("Input reader ID: "))
         check = check_card_number(connect_db(),card_number)
         if check == False:
             primary_bool = False
@@ -207,7 +207,7 @@ def admin_menu():
                 break
         except:
             print("Not a valid choice")
-            
+
 def main_menu():
     menu_bool = True
     while menu_bool == True:

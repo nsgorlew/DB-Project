@@ -1,5 +1,13 @@
 import psycopg2
 
+def registerAdmin(conn,user,pw):
+    try:
+        cur = conn.cursor()
+        cur.execute("INSERT INTO ADMIN (username, password) VALUES ('%s','%s')" %(user,pw))
+        print('Admin %s registered'.format(user))
+    except (Exception, psycopg2.DatabaseError) as e:
+        print(e)
+
 def checkUser(conn,user,pw):
     try:
         cur = conn.cursor()
@@ -19,16 +27,16 @@ def add_document_copy(conn,docid,branchid,position):
         cur.execute("SELECT DOCID FROM COPY WHERE DOCID=%s AND BID=%s" %(docid,branchid))
         row = cur.fetchone()
         if row is not None:
-            cur.execute("SELECT MAX(COPYNO)+1 FROM COPY WHERE DOCID=%s" %(docid))
+            cur.execute("SELECT MAX(COPYNO)+1 FROM COPY WHERE DOCID=%s AND BID=%s" %(docid,branchid))
             new_copy = cur.fetchone()
             cur.execute("INSERT INTO COPY (DOCID,COPYNO,BID,POSITION) VALUES (%s,%s,%s,'%s')" %(docid,new_copy[0],branchid,position))
             conn.commit()
             print("Copy added successfully")
         else:
-            print("Document doesn't exist")
+            print("Document doesn't exist in this branch")
     except (Exception, psycopg2.DatabaseError) as e:
         print(e)
-          
+
 def search_document_copy(conn,docid,copynum):
     try:
         cur = conn.cursor()
@@ -50,16 +58,20 @@ def search_document_copy(conn,docid,copynum):
 def add_new_reader(conn,reader_type,reader_name,reader_address,reader_phone):
     try:
         cur = conn.cursor()
-        cur.execute("SELECT MAX(RID)+1 FROM READER")
-        new_rid = cur.fetchone()
-        cur.execute("INSERT INTO READER VALUES (%s,'%s','%s','%s','%s')" %(new_rid[0],reader_type,reader_name,reader_address,reader_phone))
+#         cur.execute("SELECT MAX(RID)+1 FROM READER")
+#         new_rid = cur.fetchone()
+        cur.execute("INSERT INTO READER (RTYPE, RNAME, RADDRESS, PHONE_NO) VALUES ('%s','%s','%s','%s')" %(reader_type,reader_name,reader_address,reader_phone))
         conn.commit()
-
-        print("Reader added")
+        cur.execute("SELECT currval(pg_get_serial_sequence('READER','rid'))")
+        row = cur.fetchone()
+        if row is not None:
+            print("Reader added with RID: %s" % (row))
+        else:
+            print("Failed to add the new reader.")
         cur.close()
     except (Exception,psycopg2.DatabaseError) as e:
         print(e)
-        
+
 #print branch information by branch id
 def branch_search_by_id(conn,bid):
     try:
@@ -88,7 +100,7 @@ def branch_search_by_name(conn,bname):
         cur.close()
     except (Exception,psycopg2.DatabaseError) as e:
         print(e)
-        
+
 #print branch information by branch location
 def branch_search_by_loc(conn,bloc):
     try:
@@ -104,7 +116,7 @@ def branch_search_by_loc(conn,bloc):
         cur.close()
     except (Exception,psycopg2.DatabaseError) as e:
         print(e)
-        
+
 #add new document to database
 def create_new_document(conn,docname,pubdate,pubid,branchid,docposition):
     try:
@@ -116,4 +128,3 @@ def create_new_document(conn,docname,pubdate,pubid,branchid,docposition):
         cur.close()
     except (Exception,psycopg2.DatabaseError) as e:
         print(e)
-    

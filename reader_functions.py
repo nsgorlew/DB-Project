@@ -6,11 +6,12 @@ def check_card_number(conn,reader_num):
         cur.execute("SELECT RID FROM READER WHERE RID=%s",(reader_num))
         row = cur.fetchone()
         if row is not None:
-            return True
+            reader_found = True
         else:
             print("That card number does not exist. ")
-            return False
+            reader_found = False
         cur.close()
+        return reader_found
     except (Exception, psycopg2.DatabaseError) as e:
         print(e)
         

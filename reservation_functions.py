@@ -14,11 +14,11 @@ def new_reservation_num(conn,reader_id,doc_id,copynum):
         #cur.execute("SELECT * FROM RESERVATION")
         #cur.execute("SELECT RES_NO FROM RESERVATION ORDER BY DTIME DESC LIMIT 1")
         #####################
-        while True:
-            row = cur.fetchone()
-            if row == None:
-                break
-            print(row)
+        #while True:
+        #    row = cur.fetchone()
+        #    if row == None:
+        #        break
+        #    print(row)
         cur.close()
     except (Exception,psycopg2.DatabaseError) as e:
         print(e)
