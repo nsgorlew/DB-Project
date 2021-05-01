@@ -52,6 +52,18 @@ def fine(conn,reader_id):
         for difference in range(len(differences)):
             if differences[difference] > 20:
                 fine_amount = fine_amount + Decimal((differences[difference]-20)*0.2)
+        cur.execute("SELECT (RDTIME-BDTIME) AS INTEGER FROM BORROWING,BORROWS WHERE BORROWING.BOR_NO=BORROWS.BOR_NO AND RID=%s" % (reader_id))
+        return_differences = []
+        while True:
+            row = cur.fetchone()
+            if row == None:
+                break
+            ret_diff = row[0]
+            return_differences.append(ret_diff)
+            for date_diff in range(len(return_differences)):
+                if return_differences[date_diff] > 20:
+                    fine_amount = fine_amount + Decimal((return_differences[date_diff]-20)*0.2)
+        cur.close()
         print("-"*40)
         print("Fines for unreturned documents: ${}".format(round(fine_amount,2)))
     except (Exception, psycopg2.DatabaseError) as e:
