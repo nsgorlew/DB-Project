@@ -1,13 +1,30 @@
 import psycopg2
 from decimal import *
 
+#check if someone else reserved a document before allowing a reader to borrow
+def check_reservations(conn,reader_id,doc_id,copy):
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT EXISTS(SELECT RID FROM RESERVES WHERE DOCID=%s AND COPYNO=%s AND RID!=%s)"%(doc_id,copy,reader_id))
+        row = cur.fetchone()
+        if row[0] == True:
+            return True
+            print("Another reader has reserved this document")
+        elif row[0] == False:
+            return False
+        conn.close()
+    except (Exception, psycopg2.DatabaseError) as e:
+        print(e)
+
 #assuming reader id = library card number
 def new_borrow(conn,reader_id,doc_id,copy):
         try:
             cur = conn.cursor()
 #             cur.execute("INSERT INTO BORROWING (BOR_NO,BDTIME) VALUES (((SELECT BOR_NO FROM BORROWING ORDER BY BOR_NO DESC LIMIT 1)+1),CURRENT_DATE)")
-            cur.execute("INSERT INTO BORROWING (BDTIME, RDTIME) VALUES (CURRENT_DATE, NULL)")
+            #RDTIME WILL AUTOMATICALLY BE NULL IF NOT MENTIONED IN THE INSERT
+            cur.execute("INSERT INTO BORROWING (BDTIME) VALUES (CURRENT_DATE)")
             cur.execute("INSERT INTO BORROWS (BOR_NO,DOCID,COPYNO,BID,RID) VALUES (((SELECT BOR_NO FROM BORROWING ORDER BY BDTIME DESC LIMIT 1)),%s,%s,(SELECT BID FROM COPY WHERE DOCID=%s AND COPYNO=%s),%s)" %(doc_id,copy,doc_id,copy,reader_id))
+            print("-"*80)
             print("Document successfully borrowed")
             conn.commit()
             cur.close()
@@ -65,6 +82,6 @@ def fine(conn,reader_id):
                     fine_amount = fine_amount + Decimal((return_differences[date_diff]-20)*0.2)
         cur.close()
         print("-"*40)
-        print("Fines for unreturned documents: ${}".format(round(fine_amount,2)))
+        print("Fines: ${}".format(round(fine_amount,2)))
     except (Exception, psycopg2.DatabaseError) as e:
         print(e)

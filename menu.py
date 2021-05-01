@@ -1,6 +1,6 @@
 import psycopg2
 from reservation_functions import new_reservation_num
-from borrow_functions import new_borrow,return_doc,fine
+from borrow_functions import new_borrow,return_doc,fine,check_reservations
 from reader_functions import check_card_number,get_reader_reserve_list,get_document_list
 from admin_functions import checkUser,add_document_copy,search_document_copy,add_new_reader,branch_search_by_id,branch_search_by_name,branch_search_by_loc,create_new_document
 from admin_functions import q1_most_frequent_borrowers_for_a_branch, q2_most_frequent_borrowers, q3_most_borrowed_books_for_a_branch, q4_most_borrowed_books, q5_most_popular_books_by_year
@@ -116,7 +116,13 @@ def reader_menu():
                             try:
                                 docid = input("Enter the document ID: ")
                                 cp = input("Enter the copy number: ")
-                                new_borrow(connect_db(),card_number, docid,cp)
+                                taken = check_reservations(connect_db(),card_number,docid,cp)
+                                if taken == False:
+                                    print("Good")
+                                    new_borrow(connect_db(),card_number,docid,cp)
+                                elif taken == True:
+                                    print("-" * 80)
+                                    print("Document is already reserved by another reader")
                             except:
                                 print("Not a valid document ID.")
                         elif choice==3:
