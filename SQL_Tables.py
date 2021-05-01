@@ -293,6 +293,9 @@ def create_all_tables():
             BID INTEGER NOT NULL,
             RID INTEGER NOT NULL,
             PRIMARY KEY (BOR_NO, DOCID, COPYNO, BID),
+            FOREIGN KEY (BOR_NO)
+                REFERENCES BORROWING (BOR_NO)
+                ON UPDATE CASCADE ON DELETE CASCADE,
             FOREIGN KEY (DOCID, COPYNO, BID)
                 REFERENCES COPY (DOCID, COPYNO, BID)
                 ON UPDATE CASCADE ON DELETE CASCADE,
