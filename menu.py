@@ -1,6 +1,6 @@
 import psycopg2
 from reservation_functions import new_reservation_num
-from borrow_functions import new_borrow,return_doc,fine,check_reservations
+from borrow_functions import new_borrow,return_doc,fine,check_reservations,check_borrows
 from reader_functions import check_card_number,get_reader_reserve_list,get_document_list
 from admin_functions import checkUser,add_document_copy,search_document_copy,add_new_reader,branch_search_by_id,branch_search_by_name,branch_search_by_loc,create_new_document,q6_each_branch_avgfine_borrowed_by_sdate_edate,clear_reserves,admin_check_reservations
 from admin_functions import q1_most_frequent_borrowers_for_a_branch, q2_most_frequent_borrowers, q3_most_borrowed_books_for_a_branch, q4_most_borrowed_books, q5_most_popular_books_by_year
@@ -117,13 +117,14 @@ def reader_menu():
                             try:
                                 docid = input("Enter the document ID: ")
                                 cp = input("Enter the copy number: ")
-                                taken = check_reservations(connect_db(),card_number,docid,cp)
-                                if taken == False:
-                                    print("Document NOT reserved by others")
-                                    new_borrow(connect_db(),card_number,docid,cp)
-                                elif taken == True:
+                                reserved = check_reservations(connect_db(),card_number,docid,cp)
+                                borrowed = check_borrows(connect_db(),docid,cp)
+                                if reserved or borrowed:
                                     print("-" * 80)
-                                    print("Document is already reserved by another reader")
+                                    print("Document is already reserved by another reader or borrowed")
+                                else:
+                                    print("Document is NOT reserved or borrowed by others")
+                                    new_borrow(connect_db(),card_number,docid,cp)
                             except:
                                 print("Not a valid document ID.")
                         elif choice==3:
@@ -133,15 +134,16 @@ def reader_menu():
                         elif choice==4:
                             doc_reserve_id = input("Enter the document ID: ")
                             copnum = input("Enter the copy number: ")
-                            res_result = check_reservations(connect_db(),card_number,doc_reserve_id,copnum)
-                            #IF DOC IS NOT RESERVED, WILL RETURN FALSE
-                            if res_result == True:
-                                print("-"*80)
-                                print("Document already reserved by others")
-                            elif res_result == False:
-                                print("-"*80)
-                                print("Document NOT reserved by others")
+                            reserved = check_reservations(connect_db(),card_number,doc_reserve_id,copnum)
+                            borrowed = check_borrows(connect_db(),doc_reserve_id,copnum)
+                            if reserved or borrowed:
+                                print("-" * 80)
+                                print("Document is already reserved by another reader or borrowed")
+                            else:
+                                print("Document is NOT reserved or borrowed by others")
                                 new_reservation_num(connect_db(),card_number, doc_reserve_id,copnum)
+                                print("-"*80)
+                                print("Document reserved successfully")
                         elif choice==5:
                             fine(connect_db(),card_number)
                         elif choice==6:
@@ -268,7 +270,7 @@ def time_check():
         clear_reserves(connect_db())
     else:
         print("its fine")
-        
+
 
 def main_menu():
     time_check()

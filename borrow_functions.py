@@ -1,11 +1,22 @@
 import psycopg2
 from decimal import *
 
-#check if someone else reserved a document before allowing a reader to borrow
+#check if someone else reserved a document
 def check_reservations(conn,reader_id,doc_id,copy):
     try:
         cur = conn.cursor()
         cur.execute("SELECT EXISTS(SELECT RID FROM RESERVES WHERE DOCID=%s AND COPYNO=%s AND RID<>%s)"%(doc_id,copy,reader_id))
+        result = cur.fetchone()[0]
+        conn.close()
+        return result
+    except (Exception, psycopg2.DatabaseError) as e:
+        print(e)
+
+#check if someone else borrowed the document
+def check_borrows(conn,doc_id,copy):
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT EXISTS(SELECT RID FROM BORROWS WHERE DOCID=%s AND COPYNO=%s)"%(doc_id,copy))
         result = cur.fetchone()[0]
         conn.close()
         return result
@@ -73,6 +84,8 @@ def fine(conn,reader_id):
             if row == None:
                 break
             ret_diff = row[0]
+            if ret_diff == None:
+                break
             return_differences.append(ret_diff)
             for date_diff in range(len(return_differences)):
                 if return_differences[date_diff] > 20:
