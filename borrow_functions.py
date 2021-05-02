@@ -54,7 +54,7 @@ def fine(conn,reader_id):
     try:
         cur = conn.cursor()
         #cur.execute("SELECT RDTIME FROM BORROWING WHERE RID=%s")
-        cur.execute("SELECT (CURRENT_DATE-BDTIME) AS INTEGER FROM BORROWING,BORROWS WHERE BORROWING.BOR_NO=BORROWS.BOR_NO AND RID=%s AND EXISTS(SELECT RDTIME WHERE RDTIME IS NULL)"%(reader_id))
+        cur.execute("SELECT (CURRENT_DATE-BDTIME) AS INTEGER FROM BORROWING,BORROWS WHERE BORROWING.BOR_NO=BORROWS.BOR_NO AND RID=%s AND RDTIME IS NULL"%(reader_id))
         differences = []
         while True:
             row = cur.fetchone()
@@ -66,7 +66,7 @@ def fine(conn,reader_id):
         for difference in range(len(differences)):
             if differences[difference] > 20:
                 fine_amount = fine_amount + Decimal((differences[difference]-20)*0.2)
-        cur.execute("SELECT (RDTIME-BDTIME) AS INTEGER FROM BORROWING,BORROWS WHERE BORROWING.BOR_NO=BORROWS.BOR_NO AND RID=%s" % (reader_id))
+        cur.execute("SELECT (RDTIME-BDTIME) AS INTEGER FROM BORROWING,BORROWS WHERE BORROWING.BOR_NO=BORROWS.BOR_NO AND RID=%s AND RDTIME IS NOT NULL" % (reader_id))
         return_differences = []
         while True:
             row = cur.fetchone()
@@ -78,7 +78,7 @@ def fine(conn,reader_id):
                 if return_differences[date_diff] > 20:
                     fine_amount = fine_amount + Decimal((return_differences[date_diff]-20)*0.2)
         cur.close()
-        print("-"*40)
+        print("-"*80)
         print("Fines: ${}".format(round(fine_amount,2)))
     except (Exception, psycopg2.DatabaseError) as e:
         print(e)

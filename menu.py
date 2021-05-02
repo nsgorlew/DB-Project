@@ -47,7 +47,7 @@ def search_by_doc_title(conn,doc):
 def search_by_doc_pub(conn,pub):
     try:
         cur = conn.cursor()
-        cur.execute("SELECT * FROM DOCUMENT WHERE PUBLISHERID=%s ORDER BY TITLE" %(pub))
+        cur.execute("SELECT DOCID,TITLE FROM DOCUMENT,PUBLISHER WHERE DOCUMENT.PUBLISHERID=PUBLISHER.PUBLISHERID AND PUBNAME='%s' ORDER BY TITLE" %(pub))
         row = cur.fetchone()
         while row is not None:
             print(row)
@@ -67,7 +67,7 @@ def doc_search(choice):
         search_by_doc_title(connect_db(),docTitle)
         sub_boolean = False
     elif choice == 3:
-        docPub = input("Enter the publisher ID: ")
+        docPub = input("Enter the publisher name: ")
         search_by_doc_pub(connect_db(),docPub)
         sub_boolean = False
     elif choice == 0:
@@ -103,7 +103,7 @@ def reader_menu():
                         if choice==1:
                             print("1. Search by document ID")
                             print("2. Search by document name")
-                            print("3. Search by publisher ID")
+                            print("3. Search by publisher name")
                             print("0. Return to main menu")
                             print("-" * 80)
                             sub_bool = True
