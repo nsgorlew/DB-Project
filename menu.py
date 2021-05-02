@@ -2,8 +2,9 @@ import psycopg2
 from reservation_functions import new_reservation_num
 from borrow_functions import new_borrow,return_doc,fine,check_reservations
 from reader_functions import check_card_number,get_reader_reserve_list,get_document_list
-from admin_functions import checkUser,add_document_copy,search_document_copy,add_new_reader,branch_search_by_id,branch_search_by_name,branch_search_by_loc,create_new_document
+from admin_functions import checkUser,add_document_copy,search_document_copy,add_new_reader,branch_search_by_id,branch_search_by_name,branch_search_by_loc,create_new_document,q6_each_branch_avgfine_borrowed_by_sdate_edate,clear_reserves,admin_check_reservations
 from admin_functions import q1_most_frequent_borrowers_for_a_branch, q2_most_frequent_borrowers, q3_most_borrowed_books_for_a_branch, q4_most_borrowed_books, q5_most_popular_books_by_year
+from datetime import datetime,time
 
 #connect to db
 def connect_db():
@@ -118,7 +119,7 @@ def reader_menu():
                                 cp = input("Enter the copy number: ")
                                 taken = check_reservations(connect_db(),card_number,docid,cp)
                                 if taken == False:
-                                    print("Good")
+                                    print("Document NOT reserved by others")
                                     new_borrow(connect_db(),card_number,docid,cp)
                                 elif taken == True:
                                     print("-" * 80)
@@ -126,12 +127,21 @@ def reader_menu():
                             except:
                                 print("Not a valid document ID.")
                         elif choice==3:
-                            bor_number = input("Borrow number: ")
-                            return_doc(connect_db(),bor_number)
+                            return_doc_number = input("Enter the document ID: ")
+                            return_doc_copy = input("Enter the copy number: ")
+                            return_doc(connect_db(),card_number,return_doc_number,return_doc_copy)
                         elif choice==4:
                             doc_reserve_id = input("Enter the document ID: ")
                             copnum = input("Enter the copy number: ")
-                            new_reservation_num(connect_db(),card_number, doc_reserve_id,copnum)
+                            res_result = check_reservations(connect_db(),card_number,doc_reserve_id,copnum)
+                            #IF DOC IS NOT RESERVED, WILL RETURN FALSE
+                            if res_result == True:
+                                print("-"*80)
+                                print("Document already reserved by others")
+                            elif res_result == False:
+                                print("-"*80)
+                                print("Document NOT reserved by others")
+                                new_reservation_num(connect_db(),card_number, doc_reserve_id,copnum)
                         elif choice==5:
                             fine(connect_db(),card_number)
                         elif choice==6:
@@ -166,7 +176,7 @@ def admin_menu():
         print("8. Get most borrowed books for a branch")
         print("9. Get most borrowed books")
         print("10. Get most popular books by year")
-        print("11. TODO")
+        print("11. Get average fee based on start dates and end dates")
         print("0. Exit")
         print("-" * 80)
         admin_choice = int(input("Select an option (0-11): "))
@@ -179,9 +189,17 @@ def admin_menu():
                 add_document_copy(connect_db(),add_doc,add_branch,add_position)
             elif admin_choice == 2:
                 print("-" * 80)
-                search_doc_copy = input("Enter the Document ID: ")
-                search_doc_copy_num = input("Enter the document copy number: ")
-                search_document_copy(connect_db(),search_doc_copy,search_doc_copy_num)
+                search_doc_copy = int(input("Enter the Document ID: "))
+                search_doc_copy_num = int(input("Enter the document copy number: "))
+                admin_search = admin_check_reservations(connect_db(),search_doc_copy,search_doc_copy_num)
+                print(admin_search)
+                if admin_search == False:
+                    print("-" * 80)
+                    print("Status: Available")
+                elif admin_search == True:
+                    print("-" * 80)
+                    print("Status: NOT available")
+                #search_document_copy(connect_db(),search_doc_copy,search_doc_copy_num)
             elif admin_choice == 3:
                 print("-" * 80)
                 rtype = input("Type of reader: ")
@@ -233,14 +251,27 @@ def admin_menu():
                 year = input("Year (YYYY): ")
                 q5_most_popular_books_by_year(connect_db(),year)
             elif admin_choice == 11:
-                print('Function not implemented')
+                start_date = input("Input start date in format yyyy-mm-dd: ")
+                end_date = input("Input end date in format yyyy-mm-dd: ")
+                q6_each_branch_avgfine_borrowed_by_sdate_edate(connect_db(),start_date,end_date)
             elif admin_choice == 0:
                 admin_menu_bool == False
                 break
         except:
             print("Not a valid choice")
 
+#checks if it is after 6pm
+def time_check():
+    ourtime = datetime.now()
+    currenthour = ourtime.hour + 3
+    if currenthour >= 18:
+        clear_reserves(connect_db())
+    else:
+        print("its fine")
+        
+
 def main_menu():
+    time_check()
     menu_bool = True
     while menu_bool == True:
         print("-"*80)

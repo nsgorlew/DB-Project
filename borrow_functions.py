@@ -5,14 +5,10 @@ from decimal import *
 def check_reservations(conn,reader_id,doc_id,copy):
     try:
         cur = conn.cursor()
-        cur.execute("SELECT EXISTS(SELECT RID FROM RESERVES WHERE DOCID=%s AND COPYNO=%s AND RID!=%s)"%(doc_id,copy,reader_id))
-        row = cur.fetchone()
-        if row[0] == True:
-            return True
-            print("Another reader has reserved this document")
-        elif row[0] == False:
-            return False
+        cur.execute("SELECT EXISTS(SELECT RID FROM RESERVES WHERE DOCID=%s AND COPYNO=%s AND RID<>%s)"%(doc_id,copy,reader_id))
+        result = cur.fetchone()[0]
         conn.close()
+        return result
     except (Exception, psycopg2.DatabaseError) as e:
         print(e)
 
